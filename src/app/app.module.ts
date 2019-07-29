@@ -8,7 +8,7 @@ import { FakeDataService } from './services/fake-data.service';
 import { HttpClientInMemoryWebApiModule  } from 'angular-in-memory-web-api';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
-import { MatCheckboxModule, MatCardModule, MatPaginatorModule, MatProgressSpinnerModule, MatSortModule, MatTableModule  } from '@angular/material';
+import { MatToolbarModule, MatCheckboxModule, MatCardModule, MatPaginatorModule, MatProgressSpinnerModule, MatSortModule, MatTableModule, MatSelectModule  } from '@angular/material';
 
 @NgModule({
   declarations: [
@@ -17,6 +17,8 @@ import { MatCheckboxModule, MatCardModule, MatPaginatorModule, MatProgressSpinne
   ],
   imports: [
     HttpClientModule,
+    MatSelectModule,
+    MatToolbarModule,
     MatTableModule,
     MatCheckboxModule,
     MatPaginatorModule,

@@ -24,7 +24,9 @@
   </ng-container>
 
   <ng-container matColumnDef="ip">
-    <mat-header-cell mat-sort-header *matHeaderCellDef>IP Address</mat-header-cell>
+    <mat-header-cell mat-sort-header *matHeaderCellDef
+      >IP Address</mat-header-cell
+    >
     <mat-cell *matCellDef="let application">{{
       application.ipAddress
     }}</mat-cell>
@@ -41,8 +43,22 @@
   <mat-progress-spinner color="primary" mode="indeterminate">
   </mat-progress-spinner>
 </mat-card>
-<mat-paginator
-  [length]="dataSource.totalItems$ | async"
-  [pageSize]="5"
-  [pageSizeOptions]="[5, 10, 20]"
-></mat-paginator>
+<mat-toolbar>
+  <mat-toolbar-row>
+    <mat-paginator
+      class="paginator"
+      [length]="dataSource.totalItems$ | async"
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 20]"
+    ></mat-paginator>
+    <label>Go to page: </label>
+    <mat-form-field class="mat-paginator-page-size-select">
+      <mat-select
+        [value]="paginator.pageIndex + 1"
+        (selectionChange)="changePage($event.value - 1)"
+      >
+        <mat-option *ngFor="let p of pages" [value]="p">{{ p }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </mat-toolbar-row>
+</mat-toolbar>

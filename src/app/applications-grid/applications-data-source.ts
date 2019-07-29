@@ -11,8 +11,8 @@ export class ApplicationsDataSource implements DataSource<ApplicationModel> {
     private loadingSubject = new BehaviorSubject<boolean>(false);
     private totalItemsSubject = new BehaviorSubject<number>(0);
 
-    public loading$ = this.loadingSubject.asObservable();
-    public totalItems$ = this.totalItemsSubject.asObservable();
+    public loading$ = this.loadingSubject;
+    public totalItems$ = this.totalItemsSubject;
 
     constructor(private applicationService: ApplicationService) {}
 
