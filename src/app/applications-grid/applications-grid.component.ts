@@ -18,16 +18,19 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
 
   private initialSelection = [];
   private allowMultiSelect = true;
-  private selection: SelectionModel<ApplicationModel>;
+  private selection: SelectionModel<string>;
+  private allSelected: boolean;
 
   displayedColumns = ['select', 'name', 'ip'];
   constructor(private applicationService: ApplicationService) {}
 
   ngOnInit() {
-    this.selection = new SelectionModel<ApplicationModel>(
+    this.allSelected = false;
+    this.selection = new SelectionModel<string>(
       this.allowMultiSelect,
       this.initialSelection
     );
+
     this.dataSource = new ApplicationsDataSource(this.applicationService);
     this.dataSource.loadApplications(
       this.defaultPageIndex,
@@ -69,22 +72,21 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
     this.paginator._changePageSize(this.paginator.pageSize);
   }
 
-  isAllSelected(): boolean {
-    if (!this.dataSource.data || !this.dataSource.data.length) {
-      return false;
-    }
-
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
-    return numSelected === numRows;
-  }
-
   masterToggle(): void {
     if (!this.dataSource.data || !this.dataSource.data.length) {
       return;
     }
 
-    const allSelected = this.isAllSelected();
-    this.dataSource.data.forEach(row => allSelected ? this.selection.deselect(row) : this.selection.select(row));
+    if (this.allSelected) {
+      this.selection.clear();
+      this.allSelected = false;
+    } else {
+      this.dataSource.data.forEach(row => this.selection.select(row.id));
+      this.allSelected = true;
+    }
+
+    if (!allSelected) {
+      this.selection.clear();
+    }
   }
 }

@@ -1,6 +1,9 @@
 export class ApplicationModel {
 
+    public id: string;
+
     public name: string;
+
     public ipAddress: string;
 
     constructor() {}
@@ -9,6 +12,7 @@ export class ApplicationModel {
         const instance = new ApplicationModel();
         instance.name = ApplicationModel.generateName();
         instance.ipAddress = ApplicationModel.generateIp();
+        instance.id = ApplicationModel.generateGuid();
         return instance;
     }
 
@@ -33,5 +37,13 @@ export class ApplicationModel {
 
     private static generateIpSegment(): number {
         return Math.floor(Math.random() * 255) + 1;
+    }
+
+    private static generateGuid(): string {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0,
+              v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
     }
 }

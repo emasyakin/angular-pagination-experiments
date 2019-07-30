@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { InMemoryDbService, RequestInfo, STATUS, ResponseOptions, STATUS_CODE_INFO } from 'angular-in-memory-web-api';
 import { ApplicationModel } from '../models/application.model';
+import { JsonPipe } from '@angular/common';
 
 @Injectable({
   providedIn: 'root',
@@ -36,7 +37,7 @@ export class FakeDataService implements InMemoryDbService {
           data = {collection: [], totalItems: this.fakeData.length };
         } else {
           const offset = pageSize * pageIndex;
-          const dataCopy = [...this.fakeData];
+          const dataCopy = this.fakeData.map(m => <ApplicationModel>JSON.parse(JSON.stringify(m)));
           const result = dataCopy.splice(offset, pageSize);
           data = {collection: result, totalItems: this.fakeData.length };
         }
