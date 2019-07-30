@@ -1,9 +1,8 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { ApplicationsDataSource } from './applications-data-source';
 import { ApplicationService } from '../application.service';
-import { MatPaginator, MatInput, PageEvent } from '@angular/material';
-import { SelectionModel } from '@angular/cdk/collections';
-import { ApplicationModel } from '../models/application.model';
+import { MatPaginator, PageEvent } from '@angular/material';
+import { ExtendedSelectionModel } from '../models/extended-selection-model';
 @Component({
   selector: 'app-applications-grid',
   templateUrl: './applications-grid.component.html',
@@ -18,15 +17,13 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
 
   private initialSelection = [];
   private allowMultiSelect = true;
-  private selection: SelectionModel<string>;
-  private allSelected: boolean;
+  private selection: ExtendedSelectionModel<string>;
 
   displayedColumns = ['select', 'name', 'ip'];
   constructor(private applicationService: ApplicationService) {}
 
   ngOnInit() {
-    this.allSelected = false;
-    this.selection = new SelectionModel<string>(
+    this.selection = new ExtendedSelectionModel<string>(
       this.allowMultiSelect,
       this.initialSelection
     );
@@ -62,6 +59,15 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
     );
   }
 
+  toggle(rowId: string) {
+    this.selection.toggle(rowId);
+
+    if (this.selection.allSelected && !this.selection.isSelected(rowId)) {
+      this.selection.allSelected = false;
+      this.dataSource.data.forEach(row => row.id !== rowId ? this.selection.select(row.id) : null);
+    }
+  }
+
   changePage(pageIndex: number): void {
     if (this.paginator.pageIndex === pageIndex) {
       return;
@@ -77,16 +83,12 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (this.allSelected) {
+    if (this.selection.allSelected) {
       this.selection.clear();
-      this.allSelected = false;
+      this.selection.allSelected = false;
     } else {
       this.dataSource.data.forEach(row => this.selection.select(row.id));
-      this.allSelected = true;
-    }
-
-    if (!allSelected) {
-      this.selection.clear();
+      this.selection.allSelected = true;
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { InMemoryDbService, RequestInfo, STATUS, ResponseOptions, STATUS_CODE_INFO } from 'angular-in-memory-web-api';
-import { ApplicationModel } from '../models/application.model';
+import { ApplicationModel } from '../models/application-model';
 import { JsonPipe } from '@angular/common';
 
 @Injectable({

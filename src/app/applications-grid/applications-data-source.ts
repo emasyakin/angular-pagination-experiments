@@ -1,5 +1,5 @@
 import { DataSource } from '@angular/cdk/table';
-import { ApplicationModel } from '../models/application.model';
+import { ApplicationModel } from '../models/application-model';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { ApplicationService } from '../application.service';
 import { CollectionViewer } from '@angular/cdk/collections';
