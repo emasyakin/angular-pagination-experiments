@@ -1,10 +1,9 @@
 import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { ApplicationsDataSource } from './applications-data-source';
 import { ApplicationService } from '../application.service';
-import { MatPaginator, PageEvent } from '@angular/material';
+import { MatPaginator } from '@angular/material';
 import { ExtendedSelectionModel } from '../models/extended-selection-model';
-import { Subject, timer, interval, Observable, Subscription, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { interval, Subscription } from 'rxjs';
 @Component({
   selector: 'app-applications-grid',
   templateUrl: './applications-grid.component.html',
@@ -53,8 +52,42 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
     this.refreshSubscription.unsubscribe();
   }
 
+  selectThisPage(): void {
+    if (!this.dataSource.data || !this.dataSource.data.length) {
+      return;
+    }
+
+    this.dataSource.data.forEach(row =>  this.selection.select(row.id));
+  }
+
+  selectAll(): void {
+    if (!this.dataSource.data || !this.dataSource.data.length) {
+      return;
+    }
+
+    this.dataSource.data.forEach(row => this.selection.select(row.id));
+    this.selection.allSelected = true;
+  }
+
+  deselectAll(): void {
+    if (!this.dataSource.data || !this.dataSource.data.length) {
+      return;
+    }
+
+    this.selection.clear();
+    this.selection.allSelected = false;
+  }
+
+  selectedCount(): number {
+    if (this.selection.allSelected) {
+      return this.dataSource.totalItems$.value;
+    }
+
+    return this.selection.selected.length;
+  }
+
   ngAfterViewInit(): void {
-    this.paginator.page.subscribe((e: PageEvent) => this.onPaginationChange());
+    this.paginator.page.subscribe(() => this.onPaginationChange());
   }
 
   private initPagesCollection(pageCount: number) {
@@ -90,19 +123,5 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
     this.paginator.pageIndex = pageIndex;
     //A hack to workaround an issue: https://github.com/angular/components/issues/8417
     this.paginator._changePageSize(this.paginator.pageSize);
-  }
-
-  masterToggle(): void {
-    if (!this.dataSource.data || !this.dataSource.data.length) {
-      return;
-    }
-
-    if (this.selection.allSelected) {
-      this.selection.clear();
-      this.selection.allSelected = false;
-    } else {
-      this.dataSource.data.forEach(row => this.selection.select(row.id));
-      this.selection.allSelected = true;
-    }
   }
 }

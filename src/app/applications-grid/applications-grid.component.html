@@ -1,12 +1,21 @@
 <mat-table matSort class="mat-elevation-z8" [dataSource]="dataSource">
   <ng-container matColumnDef="select">
     <th mat-header-cell *matHeaderCellDef>
-      <mat-checkbox
-        (change)="$event ? masterToggle() : null"
-        [checked]="selection.hasValue() && selection.allSelected"
-        [indeterminate]="selection.hasValue() && !selection.allSelected"
-      >
-      </mat-checkbox>
+      <div mat-button [matMenuTriggerFor]="menu">
+          <mat-checkbox
+          (click)="$event !== null ? $event.preventDefault() : null"
+          [checked]="selection.hasValue() && selection.allSelected"
+          [indeterminate]="selection.hasValue() && !selection.allSelected"
+        >
+        <span *ngIf="selectedCount() > 0">{{ selectedCount() }}</span>
+        <span *ngIf="selectedCount() === 0">Select</span>
+        </mat-checkbox>
+      </div>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="selectThisPage()">Select {{ this.dataSource.data.length }} on this page</button>
+        <button mat-menu-item (click)="selectAll()">Select all instances</button>
+        <button mat-menu-item (click)="deselectAll()">Deselect all</button>
+      </mat-menu>
     </th>
     <td mat-cell *matCellDef="let row">
       <mat-checkbox
