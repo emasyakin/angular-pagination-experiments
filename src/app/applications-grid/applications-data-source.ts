@@ -5,7 +5,6 @@ import { ApplicationService } from '../application.service';
 import { CollectionViewer } from '@angular/cdk/collections';
 import { catchError, finalize } from 'rxjs/operators';
 import { timer } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
 
 export class ApplicationsDataSource implements DataSource<ApplicationModel> {
 

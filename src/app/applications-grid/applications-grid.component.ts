@@ -15,6 +15,7 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
   private refreshSubscription: Subscription;
+  private pageNumbersCollectionSubscription: Subscription;
   private defaultPageIndex = 0;
   private defaultPageSize = 5;
 
@@ -43,13 +44,14 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
       this.defaultPageSize
     );
 
-    this.dataSource.totalItems$.subscribe(totalItems => {
+    this.pageNumbersCollectionSubscription = this.dataSource.totalItems$.subscribe(totalItems => {
       this.initPagesCollection(totalItems / this.paginator.pageSize);
     });
   }
 
   ngOnDestroy(): void {
     this.refreshSubscription.unsubscribe();
+    this.pageNumbersCollectionSubscription.unsubscribe();
   }
 
   selectThisPage(): void {

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { InMemoryDbService, RequestInfo, STATUS, ResponseOptions, STATUS_CODE_INFO } from 'angular-in-memory-web-api';
 import { ApplicationModel } from '../models/application-model';
 import { JsonPipe } from '@angular/common';
+import { delay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -48,7 +49,7 @@ export class FakeDataService implements InMemoryDbService {
         };
 
         return this.finishOptions(options, reqInfo);
-      });
+      }).pipe(delay(100 + (Math.random() * 400)));
     }
 
     private finishOptions(options: ResponseOptions, {headers, url}: RequestInfo) {
