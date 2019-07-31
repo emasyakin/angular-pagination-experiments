@@ -1,17 +1,21 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { ApplicationsDataSource } from './applications-data-source';
 import { ApplicationService } from '../application.service';
 import { MatPaginator, PageEvent } from '@angular/material';
 import { ExtendedSelectionModel } from '../models/extended-selection-model';
+import { Subject, timer, interval, Observable, Subscription, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 @Component({
   selector: 'app-applications-grid',
   templateUrl: './applications-grid.component.html',
   styleUrls: ['./applications-grid.component.scss']
 })
-export class ApplicationsGridComponent implements OnInit, AfterViewInit {
+export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestroy {
   dataSource: ApplicationsDataSource;
   pages: number[] = [];
   @ViewChild(MatPaginator) paginator: MatPaginator;
+
+  private refreshSubscription: Subscription;
   private defaultPageIndex = 0;
   private defaultPageSize = 5;
 
@@ -23,6 +27,12 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
   constructor(private applicationService: ApplicationService) {}
 
   ngOnInit() {
+    this.refreshSubscription = interval(5000).subscribe(() => {
+      if (this.dataSource && !this.dataSource.loading$.value) {
+        this.dataSource.loadApplications(this.paginator.pageIndex, this.paginator.pageSize);
+      }
+    });
+
     this.selection = new ExtendedSelectionModel<string>(
       this.allowMultiSelect,
       this.initialSelection
@@ -37,6 +47,10 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit {
     this.dataSource.totalItems$.subscribe(totalItems => {
       this.initPagesCollection(totalItems / this.paginator.pageSize);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSubscription.unsubscribe();
   }
 
   ngAfterViewInit(): void {

@@ -1,9 +1,11 @@
 import { DataSource } from '@angular/cdk/table';
 import { ApplicationModel } from '../models/application-model';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { ApplicationService } from '../application.service';
 import { CollectionViewer } from '@angular/cdk/collections';
 import { catchError, finalize } from 'rxjs/operators';
+import { timer } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 export class ApplicationsDataSource implements DataSource<ApplicationModel> {
 
@@ -14,7 +16,8 @@ export class ApplicationsDataSource implements DataSource<ApplicationModel> {
     public loading$ = this.loadingSubject;
     public totalItems$ = this.totalItemsSubject;
 
-    constructor(private applicationService: ApplicationService) {}
+    constructor(private applicationService: ApplicationService) {
+    }
 
     connect(collectionViewer: CollectionViewer): Observable<ApplicationModel[]> {
         return this.applicationsSubject.asObservable();
@@ -26,10 +29,9 @@ export class ApplicationsDataSource implements DataSource<ApplicationModel> {
     }
 
     loadApplications(pageIndex: number, pageSize: number, nameFilter = '') {
-
         this.loadingSubject.next(true);
-
-        this.applicationService.getApplications(pageIndex, pageSize, nameFilter)
+        this.applicationService
+            .getApplications(pageIndex, pageSize, nameFilter)
             .pipe(catchError(() => of({collection: [], totalItems: 0})),
                   finalize(() => {
                       this.loadingSubject.next(false);
