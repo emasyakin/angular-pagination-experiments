@@ -10,11 +10,11 @@ export class ApplicationService {
 
   constructor(private http: HttpClient) { }
 
-  getApplications(pageIndex: number, pageSize: number, nameFilter = ''): Observable<{collection: ApplicationModel[], totalItems: number}> {
+  getApplications(pageIndex: number, pageSize: number, filter:object = null): Observable<{collection: ApplicationModel[], totalItems: number}> {
       return this.http.get<{collection: ApplicationModel[], totalItems: number}>
       ('api/applications', {
         params: new HttpParams()
-                .set('nameFilter', nameFilter)
+                .set('filter', JSON.stringify(filter))
                 .set('pageSize', pageSize.toString())
                 .set('pageIndex', pageIndex.toString())
       });

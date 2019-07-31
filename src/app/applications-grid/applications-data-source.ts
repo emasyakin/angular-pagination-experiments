@@ -1,6 +1,6 @@
 import { DataSource } from '@angular/cdk/table';
 import { ApplicationModel } from '../models/application-model';
-import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, Subscription, interval } from 'rxjs';
 import { ApplicationService } from '../application.service';
 import { CollectionViewer } from '@angular/cdk/collections';
 import { catchError, finalize } from 'rxjs/operators';
@@ -8,41 +8,63 @@ import { timer } from 'rxjs';
 
 export class ApplicationsDataSource implements DataSource<ApplicationModel> {
 
-    private applicationsSubject = new BehaviorSubject<ApplicationModel[]>([]);
+    private dataSubject = new BehaviorSubject<ApplicationModel[]>([]);
     private loadingSubject = new BehaviorSubject<boolean>(false);
     private totalItemsSubject = new BehaviorSubject<number>(0);
+    private refreshSubscription: Subscription;
 
     public loading$ = this.loadingSubject;
     public totalItems$ = this.totalItemsSubject;
 
-    constructor(private applicationService: ApplicationService) {
+    constructor(private applicationService: ApplicationService,
+                private timeoutMs: number,
+                private pageIndex: number,
+                private pageSize: number,
+                private filter: object = null) {
     }
 
     connect(collectionViewer: CollectionViewer): Observable<ApplicationModel[]> {
-        return this.applicationsSubject.asObservable();
+      this.refreshSubscription = timer(0, this.timeoutMs)
+                                .subscribe(() => { if (!this.loading$.value ) { this.load(); } });
+
+      return this.dataSubject.asObservable();
     }
 
     disconnect(collectionViewer: CollectionViewer): void {
-        this.applicationsSubject.complete();
+        this.refreshSubscription.unsubscribe();
+        this.dataSubject.complete();
         this.loadingSubject.complete();
     }
 
-    loadApplications(pageIndex: number, pageSize: number, nameFilter = '') {
+    changePaging(pageIndex: number, pageSize: number) {
+      this.pageSize = pageSize;
+      this.pageIndex = pageIndex;
+      this.load();
+    }
+
+    load() {
+        this.refreshSubscription.unsubscribe();
+        //console.log('Request started at ' + new Date().toISOString());
         this.loadingSubject.next(true);
         this.applicationService
-            .getApplications(pageIndex, pageSize, nameFilter)
+            .getApplications(this.pageIndex, this.pageSize, this.filter)
             .pipe(catchError(() => of({collection: [], totalItems: 0})),
                   finalize(() => {
-                      this.loadingSubject.next(false);
+                    this.loadingSubject.next(false);
+                    //console.log('Request finished at ' + new Date().toISOString());
+                    this.refreshSubscription = timer(this.timeoutMs, this.timeoutMs)
+                    .subscribe(() => { if (!this.loading$.value ) { this.load(); } });
                   })
         )
-        .subscribe(applications => {
-            this.applicationsSubject.next(applications.collection);
-            this.totalItemsSubject.next(applications.totalItems);
+        .subscribe(response => {
+            this.dataSubject.next(response.collection);
+            if (this.totalItemsSubject.value !== response.totalItems) {
+              this.totalItemsSubject.next(response.totalItems);
+            }
         });
     }
 
     get data(): ApplicationModel[] {
-        return this.applicationsSubject.value;
+        return this.dataSubject.value;
     }
 }

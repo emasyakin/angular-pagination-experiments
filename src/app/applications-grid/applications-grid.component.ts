@@ -3,7 +3,8 @@ import { ApplicationsDataSource } from './applications-data-source';
 import { ApplicationService } from '../application.service';
 import { MatPaginator } from '@angular/material';
 import { ExtendedSelectionModel } from '../models/extended-selection-model';
-import { interval, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-applications-grid',
   templateUrl: './applications-grid.component.html',
@@ -14,44 +15,41 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
   pages: number[] = [];
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
-  private refreshSubscription: Subscription;
   private pageNumbersCollectionSubscription: Subscription;
-  private defaultPageIndex = 0;
-  private defaultPageSize = 5;
-
-  private initialSelection = [];
-  private allowMultiSelect = true;
+  private pageChangesSubscription: Subscription;
+  private readonly defaultPageIndex = 0;
+  private readonly defaultPageSize = 5;
+  private readonly defaultRefreshTimeoutMs = 5000;
+  private readonly allowMultiSelect = true;
+  private readonly initialSelection = [];
   private selection: ExtendedSelectionModel<string>;
 
   displayedColumns = ['select', 'name', 'ip'];
   constructor(private applicationService: ApplicationService) {}
 
   ngOnInit() {
-    this.refreshSubscription = interval(5000).subscribe(() => {
-      if (this.dataSource && !this.dataSource.loading$.value) {
-        this.dataSource.loadApplications(this.paginator.pageIndex, this.paginator.pageSize);
-      }
-    });
-
     this.selection = new ExtendedSelectionModel<string>(
       this.allowMultiSelect,
       this.initialSelection
     );
 
-    this.dataSource = new ApplicationsDataSource(this.applicationService);
-    this.dataSource.loadApplications(
-      this.defaultPageIndex,
-      this.defaultPageSize
-    );
+    this.dataSource = new ApplicationsDataSource(this.applicationService,
+                                                 this.defaultRefreshTimeoutMs,
+                                                 this.defaultPageIndex,
+                                                 this.defaultPageSize);
 
     this.pageNumbersCollectionSubscription = this.dataSource.totalItems$.subscribe(totalItems => {
       this.initPagesCollection(totalItems / this.paginator.pageSize);
     });
   }
 
+  ngAfterViewInit(): void {
+    this.pageChangesSubscription = this.paginator.page.subscribe(() => this.onPaginationChange());
+  }
+
   ngOnDestroy(): void {
-    this.refreshSubscription.unsubscribe();
     this.pageNumbersCollectionSubscription.unsubscribe();
+    this.pageChangesSubscription.unsubscribe();
   }
 
   selectThisPage(): void {
@@ -88,10 +86,6 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
     return this.selection.selected.length;
   }
 
-  ngAfterViewInit(): void {
-    this.paginator.page.subscribe(() => this.onPaginationChange());
-  }
-
   private initPagesCollection(pageCount: number) {
     if (this.pages.length !== pageCount) {
       const pages = this.pages = [];
@@ -102,10 +96,7 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
   private onPaginationChange() {
     const totalPages = this.dataSource.totalItems$.value / this.paginator.pageSize;
     this.initPagesCollection(totalPages);
-    this.dataSource.loadApplications(
-      this.paginator.pageIndex,
-      this.paginator.pageSize
-    );
+    this.dataSource.changePaging(this.paginator.pageIndex, this.paginator.pageSize);
   }
 
   toggle(rowId: string) {
