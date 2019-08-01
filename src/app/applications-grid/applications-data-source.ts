@@ -1,39 +1,38 @@
 import { DataSource } from '@angular/cdk/table';
 import { ApplicationModel } from '../models/application-model';
-import { BehaviorSubject, Observable, of, Subject, Subscription, interval } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, Subscription, interval, empty } from 'rxjs';
 import { ApplicationService } from '../application.service';
 import { CollectionViewer } from '@angular/cdk/collections';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, switchMapTo, filter } from 'rxjs/operators';
 import { timer } from 'rxjs';
 
 export class ApplicationsDataSource implements DataSource<ApplicationModel> {
 
-    private dataSubject = new BehaviorSubject<ApplicationModel[]>([]);
-    private loadingSubject = new BehaviorSubject<boolean>(false);
-    private totalItemsSubject = new BehaviorSubject<number>(0);
+    private data$ = new BehaviorSubject<ApplicationModel[]>([]);
     private refreshSubscription: Subscription;
-
-    public loading$ = this.loadingSubject;
-    public totalItems$ = this.totalItemsSubject;
+    public loading$ = new BehaviorSubject<boolean>(false);
+    public totalItems$ = new BehaviorSubject<number>(0);
 
     constructor(private applicationService: ApplicationService,
                 private timeoutMs: number,
                 private pageIndex: number,
                 private pageSize: number,
-                private filter: object = null) {
+                private dataFilter: object = null) {
     }
 
     connect(collectionViewer: CollectionViewer): Observable<ApplicationModel[]> {
-      this.refreshSubscription = timer(0, this.timeoutMs)
-                                .subscribe(() => { if (!this.loading$.value ) { this.load(); } });
+      this.refreshSubscription = this.loading$
+                                    .pipe(filter(loading => !loading),
+                                          switchMapTo(timer(this.timeoutMs, this.timeoutMs)))
+                                    .subscribe(() => this.load());
 
-      return this.dataSubject.asObservable();
+      return this.data$.asObservable();
     }
 
     disconnect(collectionViewer: CollectionViewer): void {
         this.refreshSubscription.unsubscribe();
-        this.dataSubject.complete();
-        this.loadingSubject.complete();
+        this.data$.complete();
+        this.loading$.complete();
     }
 
     changePaging(pageIndex: number, pageSize: number) {
@@ -43,28 +42,23 @@ export class ApplicationsDataSource implements DataSource<ApplicationModel> {
     }
 
     load() {
-        this.refreshSubscription.unsubscribe();
-        //console.log('Request started at ' + new Date().toISOString());
-        this.loadingSubject.next(true);
+        this.loading$.next(true);
         this.applicationService
-            .getApplications(this.pageIndex, this.pageSize, this.filter)
+            .getApplications(this.pageIndex, this.pageSize, this.dataFilter)
             .pipe(catchError(() => of({collection: [], totalItems: 0})),
                   finalize(() => {
-                    this.loadingSubject.next(false);
-                    //console.log('Request finished at ' + new Date().toISOString());
-                    this.refreshSubscription = timer(this.timeoutMs, this.timeoutMs)
-                    .subscribe(() => { if (!this.loading$.value ) { this.load(); } });
+                    this.loading$.next(false);
                   })
         )
         .subscribe(response => {
-            this.dataSubject.next(response.collection);
-            if (this.totalItemsSubject.value !== response.totalItems) {
-              this.totalItemsSubject.next(response.totalItems);
+            this.data$.next(response.collection);
+            if (this.totalItems$.value !== response.totalItems) {
+              this.totalItems$.next(response.totalItems);
             }
         });
     }
 
     get data(): ApplicationModel[] {
-        return this.dataSubject.value;
+        return this.data$.value;
     }
 }

@@ -38,6 +38,8 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
                                                  this.defaultPageIndex,
                                                  this.defaultPageSize);
 
+    this.dataSource.load();
+
     this.pageNumbersCollectionSubscription = this.dataSource.totalItems$.subscribe(totalItems => {
       this.initPagesCollection(totalItems / this.paginator.pageSize);
     });
