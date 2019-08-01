@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
-import { ApplicationsDataSource } from './applications-data-source';
+import { PagedDataSource } from './applications-data-source';
 import { ApplicationService } from '../application.service';
 import { MatPaginator } from '@angular/material';
 import { ExtendedSelectionModel } from '../models/extended-selection-model';
@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./applications-grid.component.scss']
 })
 export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestroy {
-  dataSource: ApplicationsDataSource;
+  dataSource: PagedDataSource;
   pages: number[] = [];
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
@@ -33,10 +33,10 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
       this.initialSelection
     );
 
-    this.dataSource = new ApplicationsDataSource(this.applicationService,
-                                                 this.defaultRefreshTimeoutMs,
-                                                 this.defaultPageIndex,
-                                                 this.defaultPageSize);
+    this.dataSource = new PagedDataSource(this.applicationService,
+                                          this.defaultRefreshTimeoutMs,
+                                          this.defaultPageIndex,
+                                          this.defaultPageSize);
 
     this.dataSource.load();
 
@@ -55,24 +55,24 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   selectThisPage(): void {
-    if (!this.dataSource.data || !this.dataSource.data.length) {
+    if (!this.dataSource.data$.value || !this.dataSource.data$.value.length) {
       return;
     }
 
-    this.dataSource.data.forEach(row =>  this.selection.select(row.id));
+    this.dataSource.data$.value.forEach(row =>  this.selection.select(row.id));
   }
 
   selectAll(): void {
-    if (!this.dataSource.data || !this.dataSource.data.length) {
+    if (!this.dataSource.data$.value || !this.dataSource.data$.value.length) {
       return;
     }
 
-    this.dataSource.data.forEach(row => this.selection.select(row.id));
+    this.dataSource.data$.value.forEach(row => this.selection.select(row.id));
     this.selection.allSelected = true;
   }
 
   deselectAll(): void {
-    if (!this.dataSource.data || !this.dataSource.data.length) {
+    if (!this.dataSource.data$.value || !this.dataSource.data$.value.length) {
       return;
     }
 
@@ -106,7 +106,7 @@ export class ApplicationsGridComponent implements OnInit, AfterViewInit, OnDestr
 
     if (this.selection.allSelected && !this.selection.isSelected(rowId)) {
       this.selection.allSelected = false;
-      this.dataSource.data.forEach(row => row.id !== rowId ? this.selection.select(row.id) : null);
+      this.dataSource.data$.value.forEach(row => row.id !== rowId ? this.selection.select(row.id) : null);
     }
   }
 
